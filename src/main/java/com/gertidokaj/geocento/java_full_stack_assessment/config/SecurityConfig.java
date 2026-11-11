@@ -1,5 +1,6 @@
 package com.gertidokaj.geocento.java_full_stack_assessment.config;
 
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -62,6 +63,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .exceptionHandling(eh -> eh.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/")))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(EndpointRequest.to("prometheus")).permitAll()
                         .requestMatchers("/", "/index.html", "/login.html", "/css/**", "/js/**", "/thumbnails/**").permitAll()
                         .anyRequest().authenticated()
                 )
