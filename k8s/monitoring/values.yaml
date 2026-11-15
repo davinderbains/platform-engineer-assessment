@@ -1,0 +1,28 @@
+fullnameOverride: monitoring
+
+grafana:
+  enabled: false
+nodeExporter:
+  enabled: false
+
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false
+kubeScheduler:
+  enabled: false
+
+prometheus:
+  service:
+    type: NodePort
+    nodePort: 30090
+  prometheusSpec:
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+alertmanager:
+  service:
+    type: NodePort
+    nodePort: 30093
