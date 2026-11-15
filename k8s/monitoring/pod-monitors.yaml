@@ -1,0 +1,27 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: api
+  namespace: assessment
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  podMetricsEndpoints:
+    - port: management
+      path: /actuator/prometheus
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: keycloak
+  namespace: assessment
+spec:
+  jobLabel: app.kubernetes.io/name
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: keycloak
+  podMetricsEndpoints:
+    - port: management
+      path: /metrics
