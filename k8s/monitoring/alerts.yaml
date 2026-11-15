@@ -1,0 +1,70 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: assessment-alerts
+  namespace: assessment
+spec:
+  groups:
+    - name: assessment
+      rules:
+        - alert: ApiDown
+          expr: absent(up{namespace="assessment", job="api"} == 1)
+          for: 1m
+          labels:
+            team: assessment
+            severity: critical
+          annotations:
+            description: No API pod has answered for 1 minute. The web page and search are down.
+
+        - alert: ApiErrors
+          expr: |
+            sum(rate(http_server_requests_seconds_count{namespace="assessment", job="api", uri="/api/products/search", status=~"5.."}[5m]))
+              /
+            sum(rate(http_server_requests_seconds_count{namespace="assessment", job="api", uri="/api/products/search"}[5m]))
+              > 0.05
+          for: 1m
+          labels:
+            team: assessment
+            severity: warning
+          annotations:
+            description: "{{ $value | humanizePercentage }} of search requests failed with a 5xx error in the last 5 minutes."
+
+        - alert: KeycloakDown
+          expr: absent(up{namespace="assessment", job="keycloak"} == 1)
+          for: 1m
+          labels:
+            team: assessment
+            severity: critical
+          annotations:
+            description: Keycloak has not answered for 1 minute. Users can't log in.
+
+        - alert: JobFailed
+          expr: |
+            (
+              kube_job_status_start_time{namespace="assessment"}
+                and on (namespace, job_name) kube_job_owner{owner_kind="CronJob", owner_name="image-job"}
+                and on (namespace, job_name) kube_job_failed{condition="true"} == 1
+            )
+            == on (namespace) group_left
+            max by (namespace) (
+              kube_job_status_start_time{namespace="assessment"}
+                and on (namespace, job_name) kube_job_owner{owner_kind="CronJob", owner_name="image-job"}
+            )
+          labels:
+            team: assessment
+            severity: warning
+          annotations:
+            description: "Image job run {{ $labels.job_name }} failed. See kubectl -n assessment logs job/{{ $labels.job_name }}"
+
+        - alert: JobOverdue
+          expr: |
+            time() - max by (namespace, cronjob) (
+                kube_cronjob_status_last_successful_time{namespace="assessment", cronjob="image-job"}
+              or
+                kube_cronjob_created{namespace="assessment", cronjob="image-job"}
+            ) > 26 * 3600
+          labels:
+            team: assessment
+            severity: warning
+          annotations:
+            description: "The image job has not had a successful run for {{ $value | humanizeDuration }}."
