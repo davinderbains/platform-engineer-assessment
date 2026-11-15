@@ -6,3 +6,4 @@ resources:
   - minio.yaml
   - keycloak.yaml
   - api.yaml
+  - image-job.yaml
